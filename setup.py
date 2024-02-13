@@ -86,7 +86,8 @@ class ConanExtension(Extension):
         # Initialise as an Extension so that setuptools builds a "platform
         # wheel" (not a "pure Python wheel"). We set optional=True to allow
         # `build_ext` to fail to build this empty extension.
-        super().__init__(name, sources=[], optional=True)
+        # NOTE: py_limited_api=True only works for swig>=4.2.0.post0
+        super().__init__(name, sources=[], optional=True, py_limited_api=True)
 
 class BuildConanExtCommand(Command, SubCommand):
     """
@@ -101,11 +102,18 @@ class BuildConanExtCommand(Command, SubCommand):
         self.conan_extensions = [ext for ext in self.distribution.ext_modules if isinstance(ext, ConanExtension)]
 
     def get_source_files(self) -> List[str]:
-        return [ext.conanfile.relative_to(THIS_DIR).as_posix() for ext in self.conan_extensions]
+        return []  # XXX: Doesn't matter because it all gets included automatically by setuptools-scm
 
     def run(self) -> None:
         conan_api = ConanAPI()
         conan = ConanCLI(conan_api)
+
+        # Force limited ABI compatibility for Python3.
+        # This is already assumed by the CMake build when swig>=4.2.0.
+        # NOTE: Requires all extensions to set ext.py_limited_api=True
+        bdist_wheel = self.get_finalized_command('bdist_wheel')
+        min_version = next(self.distribution.python_requires.filter(["3.8", "3.9", "3.10", "3.11", "3.12"]))
+        bdist_wheel.py_limited_api = f"cp{min_version.replace('.', '')}"
 
         for ext in self.conan_extensions:
             try:
@@ -134,6 +142,10 @@ class BuildConanExtCommand(Command, SubCommand):
             # NOTE: Leave this extension in self.distribution.ext_modules to
             # ensure that setuptools builds this as a "platform Wheel".
             self.reinitialize_command("build_py")
+
+            # Override the ABI compatibility
+            if not ext.py_limited_api:
+                bdist_wheel.py_limited_api = False
 
 setup(
     packages = [],  # XXX: Leave empty! (Automatically set by ConanExtension)

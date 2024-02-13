@@ -55,6 +55,22 @@ else()
 endif()
 include(${SWIG_USE_FILE})
 
+if(${SWIG_VERSION} VERSION_GREATER_EQUAL 4.2)
+  # Set the Python API to limited mode, to provide wider ABI
+  # compatibility (basically, we can build a single Python wheel to
+  # support all future Python versions). 
+  # See https://docs.python.org/3/c-api/stable.html
+  # NOTE: Swig 4.2.0 is required, see https://github.com/swig/swig/pull/2727
+  if(${Python3_VERSION_MINOR} VERSION_GREATER_EQUAL 10)
+    set(PYTHON_HEX_VERSION "0x0${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}00f0")
+  else()
+    set(PYTHON_HEX_VERSION "0x0${Python3_VERSION_MAJOR}0${Python3_VERSION_MINOR}00f0")
+  endif()
+  message(STATUS "SWIG>=4.2.0 found, building with Py_LIMITED_API=${PYTHON_HEX_VERSION}")
+  message(STATUS "(Refer to https://docs.python.org/3/c-api/stable.html#limited-c-api for details)")
+  add_definitions("-DPy_LIMITED_API=${PYTHON_HEX_VERSION}")  # Support for current Python version
+endif()
+
 # ! create_symlinks : create symlinks to support files in source rather than keeping them in dist The function takes one
 # required argument and N optional arguments. \argn: a list of supporting file paths
 #

@@ -48,3 +48,29 @@ test = [
 
 [tool.setuptools.dynamic]
 version = {file = "docs/source/bskVersion.txt" }
+
+[tool.cibuildwheel]
+# Don't build individual architectures for Mac, or on musllinux, or on Pypy.
+skip = ["*macosx_x86_64", "*macosx_arm64", "*-musllinux*", "pp*"]
+
+# Run simple build test
+test-command = [
+    "ctest -C Release --test-dir {project}/dist3"
+]
+
+# Build using the future-compatible manylinux_2_28 image.
+manylinux-x86_64-image = "manylinux_2_28"
+
+# Always clean build with opNav and automatically install requirements (libgtk)
+environment = { CONAN_ARGS = "-o clean=True -o opNav=True -c tools.system.package_manager:mode=install" }
+
+# Only compile on 64-bit architectures for now.
+# TODO: Do we need to compile for 32-bit?
+[tool.cibuildwheel.linux]
+archs = "auto64"
+[tool.cibuildwheel.windows]
+archs = "auto64"
+
+[tool.cibuildwheel.macos]
+# Forcibly enable cross-compiling for both architectures in universal2
+archs = ["universal2", "x86_64", "arm64"]

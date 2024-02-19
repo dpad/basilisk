@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
 # cmake>=3.18 is required for FindPython3 to work. See https://github.com/pypa/manylinux/issues/613
-# XXX: setting this minimum version to 3.21+ ends up crashing CMake on Windows. Reason is still TBD.
 
 if(POLICY CMP0078)
   cmake_policy(SET CMP0078 NEW)
@@ -69,7 +68,21 @@ if(${SWIG_VERSION} VERSION_GREATER_EQUAL 4.2)
   message(STATUS "SWIG>=4.2.0 found, building with Py_LIMITED_API=${PYTHON_HEX_VERSION}")
   message(STATUS "(Refer to https://docs.python.org/3/c-api/stable.html#limited-c-api for details)")
   add_definitions("-DPy_LIMITED_API=${PYTHON_HEX_VERSION}")  # Support for current Python version
+
+  if (MSVC)
+    # XXX: Hacky! Py_LIMITED_API somehow forces the Windows compiler to link to
+    # `python3.lib`, but it can't find it because that doesn't match the name
+    # found by CMake's findPython3. Actually, CMake 3.26+ can search for the the
+    # "Development.SABIModule" in findPython3 instead, but in yet another cruel
+    # bug, setting the cmake_minimum_version() to 3.21 or higher ends up
+    # crashing CMake on Windows as well. Reason is still TBD.
+    # So let's just overwrite the Python3 library name here and be done with it.
+    # See https://gitlab.kitware.com/cmake/cmake/-/issues/24141
+    link_directories(AFTER "${Python3_LIBRARY_DIRS}")
+    set(Python3_LIBRARIES "${Python3_LIBRARY_DIRS}/python3.lib")
+  endif()
 endif()
+
 
 # ! create_symlinks : create symlinks to support files in source rather than keeping them in dist The function takes one
 # required argument and N optional arguments. \argn: a list of supporting file paths

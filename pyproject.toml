@@ -50,8 +50,17 @@ test = [
 version = {file = "docs/source/bskVersion.txt" }
 
 [tool.cibuildwheel]
-# Don't build individual architectures for Mac, or on musllinux, or on Pypy.
-skip = ["*macosx_x86_64", "*macosx_arm64", "*-musllinux*", "pp*"]
+skip = [
+    # Don't build individual architectures for Mac.
+    "*macosx_x86_64",
+    "*macosx_arm64",
+    # Don't build on musllinux.
+    "*-musllinux*",
+    # Don't build for Pypy.
+    "pp*",
+    # Don't build Python 3.12 (not yet supported).
+    "cp312-*",
+]
 
 # Run simple build test
 test-command = [

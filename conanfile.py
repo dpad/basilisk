@@ -216,7 +216,7 @@ class BasiliskRecipe(ConanFile):
         # shared libraries can find each other using relative paths.
         tc.cache_variables["CMAKE_BUILD_RPATH_USE_ORIGIN"] = True
         # Set the minimum buildable MacOS version.
-        tc.cache_variables["CMAKE_OSX_DEPLOYMENT_TARGET"] = "10.13"
+        tc.cache_variables["MACOSX_DEPLOYMENT_TARGET"] = "10.13"
         tc.parallel = True
 
         # Generate!
